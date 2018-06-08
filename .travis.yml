@@ -35,3 +35,4 @@ deploy:
   on:
     repo: novacbn/gmodproj-dev
     tags: true
+  skip_cleanup: true
