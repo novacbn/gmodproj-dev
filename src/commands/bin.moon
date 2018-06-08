@@ -14,7 +14,7 @@ import execFormat, isFile from "novacbn/gmodproj/lib/utilities/fs"
 -- ::TEMPLATE_EXECUTION_SUCCESS(string script, number status) -> string
 -- Formats a successful script execution
 --
-TEMPLATE_EXECUTION_SUCCESS = (script, status, stdout) -> "Successfully executed '#{script}' (#{status})"
+TEMPLATE_EXECUTION_SUCCESS = (script, status) -> "Successfully executed '#{script}' (#{status})"
 
 -- ::TEMPLATE_EXECUTION_ERROR(string script) -> string
 -- Formats failed script execution with an unexpected error

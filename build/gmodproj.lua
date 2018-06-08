@@ -885,7 +885,7 @@ do\
   execFormat, isFile = _obj_0.execFormat, _obj_0.isFile\
 end\
 local TEMPLATE_EXECUTION_SUCCESS\
-TEMPLATE_EXECUTION_SUCCESS = function(script, status, stdout)\
+TEMPLATE_EXECUTION_SUCCESS = function(script, status)\
   return \"Successfully executed '\" .. tostring(script) .. \"' (\" .. tostring(status) .. \")\"\
 end\
 local TEMPLATE_EXECUTION_ERROR\
@@ -1150,10 +1150,10 @@ ElapsedTimer = Object:extend({\
     return format(\"%.4fs\", getSeconds() - self.startTime)\
   end\
 })",
-['novacbn/gmodproj/lib/ScriptingEnvironment'] = "local error, ipairs, pcall, pairs, setfenv\
+['novacbn/gmodproj/lib/ScriptingEnvironment'] = "local assert, error, ipairs, pcall, pairs, setfenv\
 do\
   local _obj_0 = _G\
-  error, ipairs, pcall, pairs, setfenv = _obj_0.error, _obj_0.ipairs, _obj_0.pcall, _obj_0.pairs, _obj_0.setfenv\
+  assert, error, ipairs, pcall, pairs, setfenv = _obj_0.assert, _obj_0.error, _obj_0.ipairs, _obj_0.pcall, _obj_0.pairs, _obj_0.setfenv\
 end\
 local match\
 match = string.match\
@@ -1207,6 +1207,7 @@ ChunkEnvironment = function(environmentRoot, allowUnsafe)\
     SYSTEM_OS_ARCH = SYSTEM_OS_ARCH,\
     SYSTEM_OS_TYPE = SYSTEM_OS_TYPE,\
     SYSTEM_UNIX_LIKE = SYSTEM_UNIX_LIKE,\
+    assert = assert,\
     error = error,\
     exists = function(path)\
       path = assertx.argument(getEnvironmentPath(path), 1, \"exists\", \"expected relative path, got '\" .. tostring(path) .. \"'\")\
@@ -1337,7 +1338,7 @@ MAP_DEFAULT_PLUGINS = {\
 }\
 SYSTEM_OS_ARCH = arch\
 SYSTEM_OS_TYPE = os\
-SYSTEM_UNIX_LIKE = os == \"Linux\" or os == \"Darwin\"\
+SYSTEM_UNIX_LIKE = os == \"Linux\" or os == \"OSX\"\
 do\
   local _with_0 = { }\
   _with_0.home = process.cwd()\

@@ -1,6 +1,6 @@
 import
-    error, ipairs, pcall, pairs,
-    setfenv
+    assert, error, ipairs, pcall,
+    pairs, setfenv
 from _G
 import match from string
 
@@ -31,32 +31,37 @@ ChunkEnvironment = (environmentRoot, allowUnsafe) ->
 
     local environmentTable
     environmentTable = {
-        -- environmentTable::ENV_ALLOW_UNSAFE_SCRIPTING -> boolean
+        -- ChunkEnvironment::ENV_ALLOW_UNSAFE_SCRIPTING -> boolean
         -- Represents if unsafe scripting is allowed by the user
         -- scripting, safe
         ENV_ALLOW_UNSAFE_SCRIPTING: allowUnsafe
 
-        -- environmentTable::SYSTEM_OS_ARCH -> boolean
+        -- ChunkEnvironment::SYSTEM_OS_ARCH -> boolean
         -- Represents the architecture of the operating system
         -- scripting, safe
         SYSTEM_OS_ARCH: SYSTEM_OS_ARCH
 
-        -- environmentTable::SYSTEM_OS_TYPE -> boolean
+        -- ChunkEnvironment::SYSTEM_OS_TYPE -> boolean
         -- Represents the type of operating system currently running
         -- scripting, safe
         SYSTEM_OS_TYPE: SYSTEM_OS_TYPE
 
-        -- environmentTable::SYSTEM_UNIX_LIKE -> boolean
+        -- ChunkEnvironment::SYSTEM_UNIX_LIKE -> boolean
         -- Represents if the operating system is unix-like in its environment
         -- scripting, safe
         SYSTEM_UNIX_LIKE: SYSTEM_UNIX_LIKE
 
-        -- environmentTable::error(string error, number level) -> void
+        -- ChunkEnvironment::assert(any ...) -> any ...
+        -- Lua's built-in assert function
+        -- scripting, safe
+        assert: assert
+
+        -- ChunkEnvironment::error(string error, number level) -> void
         -- Lua's built-in error function
         -- scripting, safe
         error: error
 
-        -- environmentTable::exists(string path) -> boolean
+        -- ChunkEnvironment::exists(string path) -> boolean
         -- Returns true if the path exists within the scripting environment's working directory
         -- scripting, safe
         exists: (path) ->
@@ -65,7 +70,7 @@ ChunkEnvironment = (environmentRoot, allowUnsafe) ->
             hasPath = existsSync(path)
             return hasPath
 
-        -- environmentTable::isDir(string path) -> boolean
+        -- ChunkEnvironment::isDir(string path) -> boolean
         -- Returns if the path exists and is a directory
         -- scripting, safe
         isDir: (path) ->
@@ -73,7 +78,7 @@ ChunkEnvironment = (environmentRoot, allowUnsafe) ->
             path = assertx.argument(getEnvironmentPath(path), 1, "isDir", "expected relative path, got '#{path}'")
             return isDir(path)
 
-        -- environmentTable::isFile(string path) -> boolean
+        -- ChunkEnvironment::isFile(string path) -> boolean
         -- Returns if the path exists and is a file
         -- scripting, safe
         isFile: (path) ->
@@ -81,12 +86,12 @@ ChunkEnvironment = (environmentRoot, allowUnsafe) ->
             path = assertx.argument(getEnvironmentPath(path), 1, "isFile", "expected relative path, got '#{path}'")
             return isFile(path)
 
-        -- environmentTable::ipairs(table iteratee) -> function
+        -- ChunkEnvironment::ipairs(table iteratee) -> function
         -- Lua's built-in ipairs function
         -- scripting, safe
         ipairs: ipairs
 
-        -- environmentTable::mkdir(string path) -> void
+        -- ChunkEnvironment::mkdir(string path) -> void
         -- Creates a new directory on disk
         -- scripting, safe
         mkdir: (path) ->
@@ -98,22 +103,22 @@ ChunkEnvironment = (environmentRoot, allowUnsafe) ->
             mkdirSync(path)
             return nil
 
-        -- environmentTable::pcall(function protectedFunction, any ...) -> boolean, string or any ...
+        -- ChunkEnvironment::pcall(function protectedFunction, any ...) -> boolean, string or any ...
         -- Lua's built-in pcall function
         -- scripting, safe
         pcall: pcall
 
-        -- environmentTable::pairs(table iteratee) -> function
+        -- ChunkEnvironment::pairs(table iteratee) -> function
         -- Lua's built-in pairs function
         -- scripting, safe
         pairs: pairs
 
-        -- environmentTable::print(any ...) -> void
+        -- ChunkEnvironment::print(any ...) -> void
         -- Lua's built-in print function, should be used for debugging only
         -- scripting, safe
         print: print
 
-        -- environmentTable::read(string path) -> string
+        -- ChunkEnvironment::read(string path) -> string
         -- Reads a file from disk into memory
         -- scripting, safe
         read: (path) ->
@@ -123,17 +128,17 @@ ChunkEnvironment = (environmentRoot, allowUnsafe) ->
 
             return readFileSync(path)
 
-        -- environmentTable::readDataFile(string path) -> table
+        -- ChunkEnvironment::readDataFile(string path) -> table
         -- Reads a DataFile-format file from disk into memory
         -- scripting, safe
         readDataFile: (path) -> fromString(environmentTable.read(path))
 
-        -- environmentTable::readJSON(string path) -> table
+        -- ChunkEnvironment::readJSON(string path) -> table
         -- Reads a JSON-format file from disk into memory
         -- scripting, safe
         readJSON: (path) -> decode(environmentTable.read(path))
 
-        -- environmentTable::remove(string path) -> void
+        -- ChunkEnvironment::remove(string path) -> void
         -- Removes the path from the disk
         -- scripting, safe
         remove: (path) ->
@@ -144,12 +149,12 @@ ChunkEnvironment = (environmentRoot, allowUnsafe) ->
             else unlinkSync(path)
             return nil
 
-        -- environmentTable::tostring(any value) -> string
+        -- ChunkEnvironment::tostring(any value) -> string
         -- Lua's built-in tostring function
         -- scripting, safe
         tostring: tostring
 
-        -- environmentTable::write(string path, string contents) -> void
+        -- ChunkEnvironment::write(string path, string contents) -> void
         -- Writes to a file on disk
         -- scripting, safe
         write: (path, contents) ->
@@ -159,12 +164,12 @@ ChunkEnvironment = (environmentRoot, allowUnsafe) ->
             writeFileSync(path, contents)
             return nil
 
-        -- environmentTable::writeDataFile(string path, table tableData) -> void
+        -- ChunkEnvironment::writeDataFile(string path, table tableData) -> void
         -- Writes to a DataFile-format file on disk
         -- scripting, safe
         writeDataFile: (path, tableData) -> environmentTable.write(path, toString(tableData))
 
-        -- environmentTable::writeJSON(string path, table tableData) -> void
+        -- ChunkEnvironment::writeJSON(string path, table tableData) -> void
         -- Writes to a JSON-format file on disk
         -- scripting, safe
         writeJSON: (path, tableData) -> environmentTable.write(path, encode(tableData, {
@@ -173,22 +178,22 @@ ChunkEnvironment = (environmentRoot, allowUnsafe) ->
     }
 
     if allowUnsafe then merge(environmentTable, {
-        -- environmentTable::dependency(string assetName, any ...) -> table
+        -- ChunkEnvironment::dependency(string assetName, any ...) -> table
         -- Imports a dependency from the running 'gmodproj' project build
         -- scripting, unsafe
         dependency: dependency
 
-        -- environmentTable::require(string importName) -> any
+        -- ChunkEnvironment::require(string importName) -> any
         -- Imports a script from the running 'Luvit' environment
         -- scripting, unsafe
         require: require
 
-        -- environmentTable::exec(string command) -> boolean, number or nil, string or nil
+        -- ChunkEnvironment::exec(string command) -> boolean, number or nil, string or nil
         -- Executes the shell command if shell and returns the STDOUT and status code
         -- scripting, unsafe
         exec: exec
 
-        -- environmentTable::execFormat(string ...) -> boolean, number or nil, string or nil
+        -- ChunkEnvironment::execFormat(string ...) -> boolean, number or nil, string or nil
         -- Executes the shell command if shell and returns the STDOUT and status code, formatting the vararg
         execFormat: execFormat
     })

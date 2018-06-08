@@ -6,6 +6,8 @@ isProduction    = buildMode\lower() == "production"
 buildMode       = isProduction and "production" or "development"
 mkdir "./dist" unless isDir "./dist"
 
+print SYSTEM_OS_ARCH, SYSTEM_OS_TYPE, SYSTEM_UNIX_LIKE
+
 -- Configure build process depending on build mode
 BUILD_TAG                       = "-dev.#{SYSTEM_OS_ARCH}.#{SYSTEM_OS_TYPE}"
 if isProduction then BUILD_TAG  = ".#{SYSTEM_OS_ARCH}.#{SYSTEM_OS_TYPE}"
@@ -29,19 +31,20 @@ elseif SYSTEM_OS_TYPE == "Windows"
 
     BUILD_DIST  = "dist\\gmodproj#{BUILD_TAG}.lua"
     BINARY_DIST = "dist\\gmodproj#{BUILD_TAG}.exe"
+else return 1, "Unsupported build platform '#{SYSTEM_OS_ARCH} #{SYSTEM_OS_TYPE}'"
 
 -- Produce a project build of gmodproj
 success, status, stdout = execFormat BINARY_GMODPROJ, "build", buildMode
-return 1, "Project build failed: (#{status})\n#{stdout}" unless success
+return 2, "Project build failed: (#{status})\n#{stdout}" unless success
 
 -- Create a distributable executable with the local Luvit binaries
 success, status, stdout = execFormat BINARY_LUVI, "./build", "-m", "main.lua", "-o", BINARY_DIST, BINARY_LUVIT
-return 2, "Binary creation failed: (#{status})\n#{stdout}" unless success
+return 3, "Binary creation failed: (#{status})\n#{stdout}" unless success
 
 -- Compress the binary if possible
 if isProduction and exists(BINARY_UPX) and isFile(BINARY_UPX)
     success, status, stdout = execFormat BINARY_UPX, BINARY_GMODPROJ
-    return 3, "Binary compression failed: (#{status})\n#{stdout}" unless success
+    return 4, "Binary compression failed: (#{status})\n#{stdout}" unless success
 
 -- Clean up files for distribution
 write BUILD_DIST, read("./build/gmodproj.lua")
