@@ -14,12 +14,12 @@ env:
 install:
   - sh ./bin/bootstrap.sh
 
-after_install:
+before_script:
   - ./bin/luvi --version
   - ./bin/luvit --version
   - ./bin/gmodproj --version
 
-build:
+script:
   - ./bin/gmodproj bin build development
     
     
