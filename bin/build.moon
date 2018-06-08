@@ -6,25 +6,29 @@ isProduction    = buildMode\lower() == "production"
 buildMode       = isProduction and "production" or "development"
 mkdir "./dist" unless isDir "./dist"
 
+-- Configure build process depending on build mode
+BUILD_TAG                       = "-dev.#{SYSTEM_OS_ARCH}.#{SYSTEM_OS_TYPE}"
+if isProduction then BUILD_TAG  = ".#{SYSTEM_OS_ARCH}.#{SYSTEM_OS_TYPE}"
+
 -- Configure the build process depending on the Operating System
-local BINARY_LUVI, BINARY_LUVIT, BINARY_UPX, BINARY_GMODPROJ, BINARY_DIST
-if SYSTEM_OS_TYPE == "Darwin" or SYSTEM_OS_TYPE == "Linux"
+local BINARY_LUVI, BINARY_LUVIT, BINARY_UPX, BINARY_GMODPROJ, BINARY_DIST, BUILD_DIST
+if SYSTEM_UNIX_LIKE
     BINARY_LUVI     = "./bin/luvi"
     BINARY_LUVIT    = "./bin/luvit"
     BINARY_UPX      = "./bin/upx"
     BINARY_GMODPROJ = "./bin/gmodproj"
 
-    if isProduction then BINARY_DIST    = "./dist/gmodproj.#{SYSTEM_OS_ARCH}.#{SYSTEM_OS_TYPE}"
-    else BINARY_DIST                    = "./dist/gmodproj-dev.#{SYSTEM_OS_ARCH}.#{SYSTEM_OS_TYPE}"
+    BUILD_DIST  = "./dist/gmodproj#{BUILD_TAG}.lua"
+    BINARY_DIST = "./dist/gmodproj#{BUILD_TAG}"
 
-if SYSTEM_OS_TYPE == "Windows"
+elseif SYSTEM_OS_TYPE == "Windows"
     BINARY_LUVI     = "bin\\luvi.exe"
     BINARY_LUVIT    = "bin\\luvit.exe"
     BINARY_UPX      = "bin\\upx.exe"
     BINARY_GMODPROJ = "bin\\gmodproj.exe"
 
-    if isProduction then BINARY_DIST    = "dist\\gmodproj.#{SYSTEM_OS_ARCH}.#{SYSTEM_OS_TYPE}.exe"
-    else BINARY_DIST                    = "dist\\gmodproj-dev.#{SYSTEM_OS_ARCH}.#{SYSTEM_OS_TYPE}.exe"
+    BUILD_DIST  = "dist\\gmodproj#{BUILD_TAG}.lua"
+    BINARY_DIST = "dist\\gmodproj#{BUILD_TAG}.exe"
 
 -- Produce a project build of gmodproj
 success, status, stdout = execFormat BINARY_GMODPROJ, "build", buildMode
@@ -40,17 +44,17 @@ if isProduction and exists(BINARY_UPX) and isFile(BINARY_UPX)
     return 3, "Binary compression failed: (#{status})\n#{stdout}" unless success
 
 -- Clean up files for distribution
-write "./dist/gmodproj.lua", read("./build/gmodproj.lua")
+write BUILD_DIST, read("./build/gmodproj.lua")
 remove "./build/gmodproj.lua"
 
--- If running Linux, add executable flag to build
-if SYSTEM_OS_TYPE == "Linux"
+-- If running on a Unix-like system, add executable flag to build
+if SYSTEM_UNIX_LIKE
     execFormat "chmod", "+x", BINARY_DIST
 
 -- If a production build, hash the build output
 if isProduction
-    write "./dist/gmodproj.lua.sha256", hashSHA256(read("./dist/gmodproj.lua"))
+    write BUILD_DIST..".sha256", hashSHA256(read(BUILD_DIST))
     write BINARY_DIST..".sha256", hashSHA256(read(BINARY_DIST))
 
 -- Log success!
-return 0, "Succesfully built gmodproj in #{buildMode} mode!"
+return 0, "Succesfully built gmodproj in '#{buildMode}' mode!"

@@ -12,7 +12,7 @@ import isAbsolute, join from require "path"
 
 import merge from "novacbn/novautils/table"
 
-import SYSTEM_OS_ARCH, SYSTEM_OS_TYPE from "novacbn/gmodproj/lib/constants"
+import SYSTEM_OS_ARCH, SYSTEM_OS_TYPE, SYSTEM_UNIX_LIKE from "novacbn/gmodproj/lib/constants"
 import fromString, toString from "novacbn/gmodproj/lib/datafile"
 import exec, execFormat, isDir, isFile from "novacbn/gmodproj/lib/utilities/fs"
 assertx = dependency "novacbn/gmodproj/lib/utilities/assert"
@@ -45,6 +45,16 @@ ChunkEnvironment = (environmentRoot, allowUnsafe) ->
         -- Represents the type of operating system currently running
         -- scripting, safe
         SYSTEM_OS_TYPE: SYSTEM_OS_TYPE
+
+        -- environmentTable::SYSTEM_UNIX_LIKE -> boolean
+        -- Represents if the operating system is unix-like in its environment
+        -- scripting, safe
+        SYSTEM_UNIX_LIKE: SYSTEM_UNIX_LIKE
+
+        -- environmentTable::error(string error, number level) -> void
+        -- Lua's built-in error function
+        -- scripting, safe
+        error: error
 
         -- environmentTable::exists(string path) -> boolean
         -- Returns true if the path exists within the scripting environment's working directory

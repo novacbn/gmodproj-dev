@@ -850,13 +850,11 @@ Template = Object:extend({\
   end,\
   createProject = function(self, ...) end\
 })",
-['novacbn/gmodproj/commands/bin'] = "local loadstring, print, type\
+['novacbn/gmodproj/commands/bin'] = "local loadfile, print, type\
 do\
   local _obj_0 = _G\
-  loadstring, print, type = _obj_0.loadstring, _obj_0.print, _obj_0.type\
+  loadfile, print, type = _obj_0.loadfile, _obj_0.print, _obj_0.type\
 end\
-local os\
-os = jit.os\
 local process\
 process = _G.process\
 local readFileSync\
@@ -864,15 +862,15 @@ readFileSync = require(\"fs\").readFileSync\
 local join\
 join = require(\"path\").join\
 local moonscript = require(\"moonscript/base\")\
-local ENV_ALLOW_UNSAFE_SCRIPTING, PROJECT_PATH\
+local ENV_ALLOW_UNSAFE_SCRIPTING, PROJECT_PATH, SYSTEM_OS_TYPE, SYSTEM_UNIX_LIKE\
 do\
   local _obj_0 = dependency(\"novacbn/gmodproj/lib/constants\")\
-  ENV_ALLOW_UNSAFE_SCRIPTING, PROJECT_PATH = _obj_0.ENV_ALLOW_UNSAFE_SCRIPTING, _obj_0.PROJECT_PATH\
+  ENV_ALLOW_UNSAFE_SCRIPTING, PROJECT_PATH, SYSTEM_OS_TYPE, SYSTEM_UNIX_LIKE = _obj_0.ENV_ALLOW_UNSAFE_SCRIPTING, _obj_0.PROJECT_PATH, _obj_0.SYSTEM_OS_TYPE, _obj_0.SYSTEM_UNIX_LIKE\
 end\
-local logFatal, logInfo\
+local logError, logFatal, logInfo\
 do\
   local _obj_0 = dependency(\"novacbn/gmodproj/lib/logging\")\
-  logFatal, logInfo = _obj_0.logFatal, _obj_0.logInfo\
+  logError, logFatal, logInfo = _obj_0.logError, _obj_0.logFatal, _obj_0.logInfo\
 end\
 local ScriptingEnvironment\
 ScriptingEnvironment = dependency(\"novacbn/gmodproj/lib/ScriptingEnvironment\").ScriptingEnvironment\
@@ -888,32 +886,38 @@ do\
 end\
 local TEMPLATE_EXECUTION_SUCCESS\
 TEMPLATE_EXECUTION_SUCCESS = function(script, status, stdout)\
-  return tostring(stdout) .. \"\\n\\nSuccessfully executed '\" .. tostring(script) .. \"' (\" .. tostring(status) .. \")\"\
+  return \"Successfully executed '\" .. tostring(script) .. \"' (\" .. tostring(status) .. \")\"\
+end\
+local TEMPLATE_EXECUTION_ERROR\
+TEMPLATE_EXECUTION_ERROR = function(script)\
+  return \"Unexpected error occured while executing '\" .. tostring(script) .. \"'\"\
 end\
 local TEMPLATE_EXECUTION_FAILED\
-TEMPLATE_EXECUTION_FAILED = function(script, status, stdout)\
-  return tostring(stdout) .. \"\\n\\nFailed to execute '\" .. tostring(script) .. \"' (\" .. tostring(status) .. \")\"\
+TEMPLATE_EXECUTION_FAILED = function(script, status)\
+  return \"Failed to execute '\" .. tostring(script) .. \"' (\" .. tostring(status) .. \")\"\
+end\
+local TEMPLATE_EXECUTION_SYNTAX\
+TEMPLATE_EXECUTION_SYNTAX = function(script)\
+  return \"Script '\" .. tostring(script) .. \"' had a syntax error\"\
 end\
 local resolveScript\
 resolveScript = function(script)\
   local scriptPath = join(PROJECT_PATH.bin, script)\
   if isFile(scriptPath .. \".moon\") then\
     return function()\
-      local contents = readFileSync(scriptPath .. \".moon\")\
-      return moonscript.loadstring(contents, scriptPath .. \".moon\")\
+      return moonscript.loadfile(scriptPath .. \".moon\")\
     end\
   elseif isFile(scriptPath .. \".lua\") then\
     return function()\
-      local contents = readFileSync(scriptPath .. \".lua\")\
-      return loadstring(contents, scriptPath .. \".lua\")\
+      return loadfile(scriptPath .. \".lua\")\
     end\
-  elseif os == \"Linux\" and isFile(scriptPath .. \".sh\") then\
+  elseif SYSTEM_UNIX_LIKE and isFile(scriptPath .. \".sh\") then\
     return nil, function(...)\
-      return execFormat(scriptPath .. \".sh\", ...)\
+      return execFormat(\"/usr/bin/env\", \"sh\", scriptPath .. \".sh\", ...)\
     end\
-  elseif os == \"Windows\" and isFile(scriptPath .. \".bat\") then\
+  elseif SYSTEM_OS_TYPE == \"Windows\" and isFile(scriptPath .. \".bat\") then\
     return nil, function(...)\
-      return execFormat(scriptPath .. \".bat\", ...)\
+      return execFormat(\"cmd.exe\", scriptPath .. \".bat\", ...)\
     end\
   end\
 end\
@@ -926,27 +930,37 @@ executeCommand = function(flags, script, ...)\
   if scriptLoader then\
     local scriptChunk, err = scriptLoader()\
     if err then\
-      logFatal(\"Script '\" .. tostring(script) .. \"' had a syntax error:\\n\" .. tostring(err))\
+      logError(err)\
+      logFatal(TEMPLATE_EXECUTION_SYNTAX(script))\
     end\
     local scriptingEnvironment = ScriptingEnvironment(PROJECT_PATH.home, ENV_ALLOW_UNSAFE_SCRIPTING)\
     local success, status, stdout = scriptingEnvironment:executeChunk(scriptChunk, ...)\
     if success then\
-      print(stdout)\
-      return process:exit(status)\
+      if status == 0 then\
+        return logInfo(stdout)\
+      else\
+        logError(stdout)\
+        return logFatal(TEMPLATE_EXECUTION_FAILED(script, status), {\
+          exit = status\
+        })\
+      end\
     else\
-      return logFatal(TEMPLATE_EXECUTION_FAILED(script, status, stdout), {\
-        exit = status\
+      logError(status)\
+      return logFatal(TEMPLATE_EXECUTION_ERROR(script), {\
+        exit = -1\
       })\
     end\
-  elseif shellFunc then\
+  elseif shellLoader then\
     if ENV_ALLOW_UNSAFE_SCRIPTING then\
-      local success, status, stdout = shellFunc(...)\
+      local success, status, stdout = shellLoader(...)\
       if success then\
-        return logInfo(TEMPLATE_EXECUTION_SUCCESS(script, status, stdout), {\
+        print(stdout)\
+        return logInfo(TEMPLATE_EXECUTION_SUCCESS(script, status), {\
           exit = status\
         })\
       else\
-        return logFatal(TEMPLATE_EXECUTION_FAILED(script, status, stdout), {\
+        logError(stdout)\
+        return logFatal(TEMPLATE_EXECUTION_FAILED(script, status), {\
           exit = status\
         })\
       end\
@@ -1160,10 +1174,10 @@ do\
 end\
 local merge\
 merge = dependency(\"novacbn/novautils/table\").merge\
-local SYSTEM_OS_ARCH, SYSTEM_OS_TYPE\
+local SYSTEM_OS_ARCH, SYSTEM_OS_TYPE, SYSTEM_UNIX_LIKE\
 do\
   local _obj_0 = dependency(\"novacbn/gmodproj/lib/constants\")\
-  SYSTEM_OS_ARCH, SYSTEM_OS_TYPE = _obj_0.SYSTEM_OS_ARCH, _obj_0.SYSTEM_OS_TYPE\
+  SYSTEM_OS_ARCH, SYSTEM_OS_TYPE, SYSTEM_UNIX_LIKE = _obj_0.SYSTEM_OS_ARCH, _obj_0.SYSTEM_OS_TYPE, _obj_0.SYSTEM_UNIX_LIKE\
 end\
 local fromString, toString\
 do\
@@ -1192,6 +1206,8 @@ ChunkEnvironment = function(environmentRoot, allowUnsafe)\
     ENV_ALLOW_UNSAFE_SCRIPTING = allowUnsafe,\
     SYSTEM_OS_ARCH = SYSTEM_OS_ARCH,\
     SYSTEM_OS_TYPE = SYSTEM_OS_TYPE,\
+    SYSTEM_UNIX_LIKE = SYSTEM_UNIX_LIKE,\
+    error = error,\
     exists = function(path)\
       path = assertx.argument(getEnvironmentPath(path), 1, \"exists\", \"expected relative path, got '\" .. tostring(path) .. \"'\")\
       local hasPath = existsSync(path)\
@@ -1321,6 +1337,7 @@ MAP_DEFAULT_PLUGINS = {\
 }\
 SYSTEM_OS_ARCH = arch\
 SYSTEM_OS_TYPE = os\
+SYSTEM_UNIX_LIKE = os == \"Linux\" or os == \"Darwin\"\
 do\
   local _with_0 = { }\
   _with_0.home = process.cwd()\
