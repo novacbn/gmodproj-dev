@@ -14,8 +14,8 @@ install:
   - bin\bootstrap.bat
 
 before_build:
-  - bin\luvi --version
-  - bin\luvit --version
+  - bin\luvi --version || nul
+  - bin\luvit --version || nul
   - bin\gmodproj version
 
 build_script:
