@@ -8,7 +8,7 @@ mkdir "./dist" unless isDir "./dist"
 
 -- Configure the build process depending on the Operating System
 local BINARY_LUVI, BINARY_LUVIT, BINARY_UPX, BINARY_GMODPROJ, BINARY_DIST
-if SYSTEM_OS_TYPE == "Linux"
+if SYSTEM_OS_TYPE == "Darwin" or SYSTEM_OS_TYPE == "Linux"
     BINARY_LUVI     = "./bin/luvi"
     BINARY_LUVIT    = "./bin/luvit"
     BINARY_UPX      = "./bin/upx"
