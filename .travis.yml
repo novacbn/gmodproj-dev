@@ -17,7 +17,7 @@ install:
 before_script:
   - ./bin/luvi --version || true
   - ./bin/luvit --version || true
-  - ./bin/gmodproj --version
+  - ./bin/gmodproj version
 
 script:
   - ./bin/gmodproj bin build development
