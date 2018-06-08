@@ -12,6 +12,6 @@ env:
   - GMODPROJ_BUILD_MODE=development
 
 install:
-  -sh ./bin/bootstrap.sh
+  - sh ./bin/bootstrap.sh
     
     
