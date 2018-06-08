@@ -15,8 +15,8 @@ install:
   - sh ./bin/bootstrap.sh
 
 before_script:
-  - ./bin/luvi --version
-  - ./bin/luvit --version
+  - ./bin/luvi --version || true
+  - ./bin/luvit --version || true
   - ./bin/gmodproj --version
 
 script:
