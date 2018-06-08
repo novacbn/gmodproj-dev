@@ -6,6 +6,8 @@ os:
 branches:
   only:
     - master
+    - latest
+    - /^(\d+\.)?(\d+\.)?(\d+)$/
 
 env:
   - GMODPROJ_BUILD_MODE=development
