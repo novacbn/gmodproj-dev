@@ -5,7 +5,6 @@ platform: x64
 branches:
   only:
     - master
-    - latest
 
 environment:
   GMODPROJ_BUILD_MODE: development
@@ -21,8 +20,17 @@ before_build:
 build_script:
   - bin\gmodproj bin build development
 
-on_success:
+after_test:
   - bin\gmodproj bin build production
 
 artifacts:
   - path: dist\*
+
+deploy:
+  - provider: GitHub
+    artifact: dist\*
+    draft: false
+    prerelease: false
+    on:
+      branch: master
+      appveyor_repo_tag: true  
