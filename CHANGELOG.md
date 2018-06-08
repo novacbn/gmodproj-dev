@@ -1,0 +1,97 @@
+# gmodproj changelog
+
+## 0.4.1
+* Fixed project creation via `gmodproj new`
+* Updated CI scripts for `0.4.0`
+
+## 0.4.0
+* Added the `is_key_pair` for keypair validation using `novacbn/gmodproj/api/Schema`
+    * **definition**
+    ```lua
+    {
+        is_key_pair: {keyType/tableOfTypes, valueType/tableOfTypes}
+    }
+    ```
+
+    * **sample**
+    ```lua
+    myKey = {
+        is_key_pair = {"string", {"boolean", "number"}}
+    }
+    ```
+
+    * **valid sample data**
+    ```lua
+    myKey = {
+        validStringNumber   = 3,
+        validStringBoolean  = false,
+    }
+    ```
+* Added missing error string for `MINIMUM_ITEMS` Schema validation code
+* Added fatal log on missing build directory
+* Added `writeProperites` to `novacbn/gmodproj/api/Template::Template`
+    * Removed `writeDataFile` as a result, update `Template` classes to adhere to the new `.gmodmanifest` format
+* Fixed all version information containing `0.0.3` -> `0.3.0`
+* Deprecated `novacbn/gmodproj/lib/datafile` in favor of [novacbn/properties](https://github.com/novacbn/properties)
+    * Removal in `0.5.0`
+* Updated project `.gmodmanifest` to no longer take scripts and renamed `gmodproj script <scriptName>` to `gmodproj bin <scriptName>`
+    * Now executes scripts found within `${PROJECTHOME}/bin` without their file extension.
+    * Supported script types:
+        * `.lua`
+        * `.moon`
+        * `.sh` - Linux only
+        * `.bat` - Windows only
+* Updated `manifest.gmodproj` and `packages.gmodproj` to `.gmodmanifest` and `.gmodpackages`
+    * Both are now using [novacbn/properties](https://github.com/novacbn/properties) for parsing
+        * See `gmodproj`'s [.gmodmanifest](https://github.com/novacbn/gmodproj/blob/master/.gmodmanifest) as an example
+    * The following properties were renamed for simplification:
+        `projectName` -> `name`
+        `projectAuthor` -> `author`
+        `projectRepository` -> `repository`
+        `projectVersion` -> `version`
+        `entryPoints` -> `projectBuilds`
+* Updated various Schemas have been updated
+    * `ProjectOptions.projectBuilds` - Only accepts `string` keys and `string` or `table` values keypairs
+    * `ProjectOptions.Plugins` - Only accepts `string` keys and `table` values keypairs
+* Updated various module paths for organization/consistency
+    * `novacbn/gmodproj/lib/digests` -> `novacbn/gmodproj/lib/utilities/openssl`
+    * `novacbn/gmodproj/lib/fsx` -> `novacbn/gmodproj/lib/utilities/fs`
+    * `novacbn/gmodproj/lib/utilities/assertx` -> `novacbn/gmodproj/lib/utilities/assert`
+    * `novacbn/gmodproj/lib/utilities/stringx` -> `novacbn/gmodproj/lib/utilities/string`
+* Upgraded `novacbn/gmodproj-builtin-plugin` to `0.2.0`
+    * Supports `.lprop` and `.mprop` file formats via [novacbn/properties](https://github.com/novacbn/properties)
+* Refactored `Application.moon` to `main.moon` and `commands/<command>.moon` for easier reasoning about of current and future commands
+
+## 0.3.0
+* Added third-party/dependencies references to `README.md`
+* Added `Project.projectRepository` and `Project.projectVersion` metadata fields in `manifest.gmodproj`
+    * Will be used in the future for package installations
+* Added support for targetting different scripting platforms, targets set in `Packager.targetPlaform`: `lua, garrysmod`
+    * Default target is `garrysmod`, if standard Lua project, update accordingly
+* Added support including assets automatically into your build via `Packager.includedAssets`, glob patterns supported
+* Added support for excluding assets automatically from your build via `Packager.excludedAssets`, glob patterns supported
+* Added options flags that affect various commands:
+    * `-q, --quiet`, silences all command line output
+    * `-nf, --no-file`, silences all file logging in `${PROJECTHOME}/.gmodproj/logs`
+    * `-nc, --no-cache`, disables caching built project files to `${PROJECTHOME}/.gmodproj/cache`
+* Added support for extending `gmodproj` via plugins
+    * See [gmodproj-plugin-builtin](https://github.com/novacbn/gmodproj-plugin-builtin) as a sample plugin, which is also shipped with `gmodproj`
+    * Add your plugins in one of these directories for `gmodproj` to pick them up:
+        * Per-project: `${PROJECTHOME}/.gmodproj/plugins`
+        * All projects:
+            * Linux: `~/.gmodproj/plugins`
+            * Windows: `%APPDATA%\.gmodproj\plugins`
+        * Shipping with `gmodproj`: `deps/plugins`
+* Added 'module' variable to packaged assets environments, supporting the following:
+    * `module.name`     - Name of the asset's import name for the package
+    * `module.globals`  - Global variables shared by all assets in the specific package
+* Updated functionality of `gmodproj`, spun-off default asset and platform support into seperate bundled plugin [gmodproj-plugin-builtin](https://github.com/novacbn/gmodproj-plugin-builtin)
+* Updated `gmodproj build` command:
+    * `gmodproj build [development]` now formats the project's assets as escapsed Lua strings, using the targetted platform's native runtime code loading to load and perserve asset names and stack traces
+        * This results in larger builds, and MoonScript assets are NOT compiled to keep same code lines as source
+    * `gmodproj build production` now supports minified builds, set minification level via `Project.Plugins["gmodproj-plugin-builtin"].minificationLevel`
+* Updated bundling functionality. Project files in the specified `Project.sourceDirectory` field will automatically be prefixed with `${PROJECTAUTHOR}/${PROJECTNAME}` support proper namespacing
+* Factored out most utility functionality into [novautils](https://github.com/novacbn/novautils)
+    * Using `novacbn/novautils/Object` for OOP instead of MoonScript's `class` keyword. Allowing Lua, and other languages, to use `gmodproj`'s OOP functionality more readily
+    * All of `novautils 0.2.0` is included as a supplemental std library. Access in plugins via `gmodproj.require('novacbn/novautils/...')`
+* Fixed regression of `gmodproj build` not supporting dashes in import names

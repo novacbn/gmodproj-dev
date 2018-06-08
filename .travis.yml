@@ -1,0 +1,17 @@
+language: generic
+
+os:
+  - linux
+  - osx
+
+branches:
+  only:
+    - master
+
+env:
+  - GMODPROJ_BUILD_MODE=development
+
+install:
+  -sh ./bin/bootstrap.sh
+    
+    
