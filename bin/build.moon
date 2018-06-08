@@ -6,8 +6,6 @@ isProduction    = buildMode\lower() == "production"
 buildMode       = isProduction and "production" or "development"
 mkdir "./dist" unless isDir "./dist"
 
-print SYSTEM_OS_ARCH, SYSTEM_OS_TYPE, SYSTEM_UNIX_LIKE
-
 -- Configure build process depending on build mode
 BUILD_TAG                       = "-dev.#{SYSTEM_OS_ARCH}.#{SYSTEM_OS_TYPE}"
 if isProduction then BUILD_TAG  = ".#{SYSTEM_OS_ARCH}.#{SYSTEM_OS_TYPE}"
