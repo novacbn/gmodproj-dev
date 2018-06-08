@@ -5,9 +5,24 @@ platform: x64
 branches:
   only:
     - master
+    - latest
 
 environment:
   GMODPROJ_BUILD_MODE: development
 
+install:
+  - bin\bootstrap.bat
+
+before_build:
+  - bin\luvi --version
+  - bin\luvit --version
+  - bin\gmodproj version
+
 build_script:
-  - bin\buildSource.bat
+  - bin\gmodproj bin build development
+
+on_success:
+  - bin\gmodproj bin build production
+
+artifacts:
+  - path: dist\*
