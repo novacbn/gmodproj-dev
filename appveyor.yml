@@ -25,12 +25,13 @@ after_test:
 
 artifacts:
   - path: dist\*
+    name: build
 
 deploy:
   - provider: GitHub
     auth_token:
       secure: "it5dPgEDzW8I81FnGC/hJxdStM8qMNzoVBNpecrLDc27GhbKjyvIh81ohaw5tI7O"
-    artifact: dist\*
+    artifact: build
     draft: false
     prerelease: false
     force_update: true
